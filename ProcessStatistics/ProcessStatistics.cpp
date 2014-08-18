@@ -171,7 +171,7 @@ private:
     std::list<T> values;
 };
 
-void runJobs(String ^ app, String ^ arguments, size_t aNumberOfRuns, String ^ outputFileName)
+void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRuns, String ^ aOutputFileName)
 {
     Statistic<double> totalProcessorTimeInSecondsStatistic;
     Statistic<double> peakWorkingSetInKBStatistic;
@@ -180,7 +180,7 @@ void runJobs(String ^ app, String ^ arguments, size_t aNumberOfRuns, String ^ ou
     for (size_t runNumber= 1; runNumber <= aNumberOfRuns; ++runNumber)
     {
         Console::WriteLine(L"Starting run number " + runNumber.ToString());
-        ProcessStatistics processStatistics= runProcess(app, arguments);
+        ProcessStatistics processStatistics= runProcess(aApplicationPath, aArguments);
         totalProcessorTimeInSecondsStatistic.add(processStatistics.totalProcessorTimeInSeconds);
         peakWorkingSetInKBStatistic.add(processStatistics.peakWorkingSetInKB);
         peakPageFileUsageInKBStatistic.add(processStatistics.peakPageFileUsageInKB);
@@ -196,7 +196,7 @@ void runJobs(String ^ app, String ^ arguments, size_t aNumberOfRuns, String ^ ou
     Console::WriteLine(L"Average peak page file usage (kb): " + peakPageFileUsageInKBStatistic.average().ToString());
     Console::WriteLine(L"Standard deviation of peak page file usage (kb): " + peakPageFileUsageInKBStatistic.standardDeviation().ToString());
 
-    Console::WriteLine(L"\nResults will be written to " + outputFileName);
+    Console::WriteLine(L"\nResults will be written to " + aOutputFileName);
 
     String ^ currentContent= System::String::Empty;
 
@@ -208,13 +208,13 @@ void runJobs(String ^ app, String ^ arguments, size_t aNumberOfRuns, String ^ ou
                    + ", " + peakPageFileUsageInKBStatistic.standardDeviation().ToString()
                    + "\n";
 
-    if (!IO::File::Exists(outputFileName))
+    if (!IO::File::Exists(aOutputFileName))
     {
         data= "Average total processor time (s), Standard deviation of total processor time (s), Average peak working set (kb), Standard deviation of peak working set (kb), Average peak page file usage (kb), Standard deviation of peak page file usage (kb)\n"
               + data;
     }
 
-    IO::File::AppendAllText(outputFileName, data);
+    IO::File::AppendAllText(aOutputFileName, data);
 }
 
 int main(array<System::String ^> ^args)
