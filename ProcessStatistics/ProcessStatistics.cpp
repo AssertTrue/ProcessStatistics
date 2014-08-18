@@ -206,11 +206,11 @@ void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRun
                    + ", " + peakWorkingSetInKBStatistic.standardDeviation().ToString()
                    + ", " + peakPageFileUsageInKBStatistic.average().ToString()
                    + ", " + peakPageFileUsageInKBStatistic.standardDeviation().ToString()
-                   + "\n";
+                   + Environment::NewLine;
 
     if (!IO::File::Exists(aOutputFileName))
     {
-        data= "Average total processor time (s), Standard deviation of total processor time (s), Average peak working set (kb), Standard deviation of peak working set (kb), Average peak page file usage (kb), Standard deviation of peak page file usage (kb)\n"
+        data= "Average total processor time (s), Standard deviation of total processor time (s), Average peak working set (kb), Standard deviation of peak working set (kb), Average peak page file usage (kb), Standard deviation of peak page file usage (kb)" + Environment::NewLine
               + data;
     }
 
@@ -219,16 +219,29 @@ void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRun
 
 int main(array<System::String ^> ^args)
 {
-    String ^ app = args[0];
-    
-    String ^ arguments = "";
-    
-    for (int argumentIndex= 1; argumentIndex < args->Length; ++argumentIndex)
-    {
-        arguments = arguments + args[argumentIndex] + " ";
-    }
+    size_t numberOfRuns= 0;
 
-    runJobs(app, arguments, 10, "process-statistics.csv");
+    if (args->Length >= 3
+        && size_t::TryParse(args[0], numberOfRuns)
+        && args[1]->Length > 0)
+    {
+        size_t numberOfRuns = size_t::Parse(args[0]);
+
+        String ^ app = args[2];
+    
+        String ^ arguments = "";
+    
+        for (int argumentIndex= 3; argumentIndex < args->Length; ++argumentIndex)
+        {
+            arguments = arguments + args[argumentIndex] + " ";
+        }
+
+        runJobs(app, arguments, numberOfRuns, args[1]);
+    }
+    else
+    {
+        Console::WriteLine("Usage: ProcessStatistics.exe <number of jobs> <path to output file> <path to executable> [argument1] [argument2] ...");
+    }
 
     return 0;
 }
