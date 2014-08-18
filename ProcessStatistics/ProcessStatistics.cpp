@@ -6,6 +6,8 @@
 
 using namespace System;
 using namespace System::Diagnostics;
+using namespace System::Text;
+using namespace System::Threading;
 
 struct ProcessStatistics
 {
@@ -21,6 +23,54 @@ struct ProcessStatistics
     const double peakPageFileUsageInKB;
 };
 
+public ref class OutputCollector
+{
+public:
+
+    OutputCollector(Process ^ aProcess)
+    {
+        this->OutputWaitHandle = gcnew AutoResetEvent(false);
+        this->ErrorWaitHandle = gcnew AutoResetEvent(false);
+        this->Output= gcnew StringBuilder();
+        this->Error= gcnew StringBuilder();
+
+        aProcess->OutputDataReceived += gcnew DataReceivedEventHandler(this, &OutputCollector::onOutputDataReceived);
+        aProcess->ErrorDataReceived += gcnew DataReceivedEventHandler(this, &OutputCollector::onErrorDataReceived);
+    }
+
+    AutoResetEvent^ OutputWaitHandle;
+    AutoResetEvent^ ErrorWaitHandle;
+    StringBuilder ^ Output;
+    StringBuilder ^ Error;
+
+private:
+
+    void onOutputDataReceived(Object ^ aObject, DataReceivedEventArgs ^ aArguments)
+    {
+        if (aArguments->Data == nullptr)
+        {
+            this->OutputWaitHandle->Set();
+        }
+        else
+        {
+            this->Output->AppendLine(aArguments->Data);
+        }
+    }
+
+    void onErrorDataReceived(Object ^ aObject, DataReceivedEventArgs ^ aArguments)
+    {
+        if (aArguments->Data == nullptr)
+        {
+            this->ErrorWaitHandle->Set();
+        }
+        else
+        {
+            this->Error->AppendLine(aArguments->Data);
+        }
+    }
+
+};
+
 ProcessStatistics runProcess(System::String ^ aApplication, System::String ^ aArguments)
 {
     Process ^ process = gcnew Process();
@@ -31,7 +81,12 @@ ProcessStatistics runProcess(System::String ^ aApplication, System::String ^ aAr
     process->StartInfo->RedirectStandardError = true;
     process->StartInfo->RedirectStandardOutput = true;
 
+    OutputCollector ^ outputCollector= gcnew OutputCollector(process);
+
     process->Start();
+
+    process->BeginOutputReadLine();
+    process->BeginErrorReadLine();
 
     SIZE_T peakWorkingSetSize= 0;
     SIZE_T peakPageFileUsage= 0;
@@ -49,7 +104,9 @@ ProcessStatistics runProcess(System::String ^ aApplication, System::String ^ aAr
             peakWorkingSetSize= memoryCounters.PeakWorkingSetSize;
             peakPageFileUsage= memoryCounters.PeakPagefileUsage;
         }
-    } while (!process->WaitForExit(1000));
+    } while (!process->WaitForExit(1000)
+             || !outputCollector->ErrorWaitHandle->WaitOne(1000)
+             || !outputCollector->OutputWaitHandle->WaitOne(1000));
 
     float BytesToKB = 1024;
 
@@ -58,12 +115,13 @@ ProcessStatistics runProcess(System::String ^ aApplication, System::String ^ aAr
                                         peakPageFileUsage / BytesToKB);
 
     Console::WriteLine("Standard Output:");
-    Console::WriteLine(process->StandardOutput->ReadToEnd());
+    Console::WriteLine(outputCollector->Output->ToString());
     Console::WriteLine("Standard Error:");
-    Console::WriteLine(process->StandardError->ReadToEnd());
+    Console::WriteLine(outputCollector->Error->ToString());
     Console::WriteLine(L"Total processor time (s): " + processStatistics.totalProcessorTimeInSeconds.ToString());
     Console::WriteLine(L"Peak working set (kb): " + processStatistics.peakWorkingSetInKB.ToString());
     Console::WriteLine(L"Peak page file usage (kb): " + processStatistics.peakPageFileUsageInKB.ToString());
+    Console::WriteLine("");
 
     return processStatistics;
 }
@@ -137,7 +195,7 @@ int main(array<System::String ^> ^args)
         peakPageFileUsageInKBStatistic.add(processStatistics.peakPageFileUsageInKB);
     }
 
-    Console::WriteLine(L"\nAll runs complete.\n");
+    Console::WriteLine(L"All runs complete.\n");
     Console::WriteLine(L"Average total processor time (s): " + totalProcessorTimeInSecondsStatistic.average().ToString());
     Console::WriteLine(L"Standard deviation of total processor time (s): " + totalProcessorTimeInSecondsStatistic.standardDeviation().ToString());
 
@@ -146,6 +204,28 @@ int main(array<System::String ^> ^args)
 
     Console::WriteLine(L"Average peak page file usage (kb): " + peakPageFileUsageInKBStatistic.average().ToString());
     Console::WriteLine(L"Standard deviation of peak page file usage (kb): " + peakPageFileUsageInKBStatistic.standardDeviation().ToString());
+
+    String ^ outputFileName= "process-statistics.csv";
+
+    Console::WriteLine(L"\nResults will be written to " + outputFileName);
+
+    String ^ currentContent= System::String::Empty;
+
+    String ^ data= totalProcessorTimeInSecondsStatistic.average().ToString()
+                   + ", " + totalProcessorTimeInSecondsStatistic.standardDeviation().ToString()
+                   + ", " + peakWorkingSetInKBStatistic.average().ToString()
+                   + ", " + peakWorkingSetInKBStatistic.standardDeviation().ToString()
+                   + ", " + peakPageFileUsageInKBStatistic.average().ToString()
+                   + ", " + peakPageFileUsageInKBStatistic.standardDeviation().ToString()
+                   + "\n";
+
+    if (!IO::File::Exists(outputFileName))
+    {
+        data= "Average total processor time (s), Standard deviation of total processor time (s), Average peak working set (kb), Standard deviation of peak working set (kb), Average peak page file usage (kb), Standard deviation of peak page file usage (kb)\n"
+              + data;
+    }
+
+    IO::File::AppendAllText(outputFileName, data);
 
     return 0;
 }
