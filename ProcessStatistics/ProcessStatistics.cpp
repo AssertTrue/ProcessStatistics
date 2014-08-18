@@ -171,7 +171,7 @@ private:
     std::list<T> values;
 };
 
-void runJobs(String ^ app, String ^ arguments, size_t aNumberOfRuns)
+void runJobs(String ^ app, String ^ arguments, size_t aNumberOfRuns, String ^ outputFileName)
 {
     Statistic<double> totalProcessorTimeInSecondsStatistic;
     Statistic<double> peakWorkingSetInKBStatistic;
@@ -195,8 +195,6 @@ void runJobs(String ^ app, String ^ arguments, size_t aNumberOfRuns)
 
     Console::WriteLine(L"Average peak page file usage (kb): " + peakPageFileUsageInKBStatistic.average().ToString());
     Console::WriteLine(L"Standard deviation of peak page file usage (kb): " + peakPageFileUsageInKBStatistic.standardDeviation().ToString());
-
-    String ^ outputFileName= "process-statistics.csv";
 
     Console::WriteLine(L"\nResults will be written to " + outputFileName);
 
@@ -230,7 +228,7 @@ int main(array<System::String ^> ^args)
         arguments = arguments + args[argumentIndex] + " ";
     }
 
-    runJobs(app, arguments, 10);
+    runJobs(app, arguments, 10, "process-statistics.csv");
 
     return 0;
 }
