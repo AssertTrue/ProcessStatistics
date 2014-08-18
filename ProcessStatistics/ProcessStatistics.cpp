@@ -171,24 +171,6 @@ private:
     std::list<T> values;
 };
 
-void runJobs(String ^ app, String ^ arguments);
-
-int main(array<System::String ^> ^args)
-{
-    String ^ app = args[0];
-    
-    String ^ arguments = "";
-    
-    for (int argumentIndex= 1; argumentIndex < args->Length; ++argumentIndex)
-    {
-        arguments = arguments + args[argumentIndex] + " ";
-    }
-
-    runJobs(app, arguments);
-
-    return 0;
-}
-
 void runJobs(String ^ app, String ^ arguments)
 {
     Statistic<double> totalProcessorTimeInSecondsStatistic;
@@ -236,3 +218,21 @@ void runJobs(String ^ app, String ^ arguments)
 
     IO::File::AppendAllText(outputFileName, data);
 }
+
+int main(array<System::String ^> ^args)
+{
+    String ^ app = args[0];
+    
+    String ^ arguments = "";
+    
+    for (int argumentIndex= 1; argumentIndex < args->Length; ++argumentIndex)
+    {
+        arguments = arguments + args[argumentIndex] + " ";
+    }
+
+    runJobs(app, arguments);
+
+    return 0;
+}
+
+
