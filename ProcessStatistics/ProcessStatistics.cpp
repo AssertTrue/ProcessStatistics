@@ -171,6 +171,8 @@ private:
     std::list<T> values;
 };
 
+void runJobs(String ^ app, String ^ arguments);
+
 int main(array<System::String ^> ^args)
 {
     String ^ app = args[0];
@@ -182,6 +184,13 @@ int main(array<System::String ^> ^args)
         arguments = arguments + args[argumentIndex] + " ";
     }
 
+    runJobs(app, arguments);
+
+    return 0;
+}
+
+void runJobs(String ^ app, String ^ arguments)
+{
     Statistic<double> totalProcessorTimeInSecondsStatistic;
     Statistic<double> peakWorkingSetInKBStatistic;
     Statistic<double> peakPageFileUsageInKBStatistic; 
@@ -226,6 +235,4 @@ int main(array<System::String ^> ^args)
     }
 
     IO::File::AppendAllText(outputFileName, data);
-
-    return 0;
 }
