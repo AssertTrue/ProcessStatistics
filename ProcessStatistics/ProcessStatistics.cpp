@@ -171,13 +171,13 @@ private:
     std::list<T> values;
 };
 
-void runJobs(String ^ app, String ^ arguments)
+void runJobs(String ^ app, String ^ arguments, size_t aNumberOfRuns)
 {
     Statistic<double> totalProcessorTimeInSecondsStatistic;
     Statistic<double> peakWorkingSetInKBStatistic;
     Statistic<double> peakPageFileUsageInKBStatistic; 
     
-    for (size_t runNumber= 1; runNumber <= 10; ++runNumber)
+    for (size_t runNumber= 1; runNumber <= aNumberOfRuns; ++runNumber)
     {
         Console::WriteLine(L"Starting run number " + runNumber.ToString());
         ProcessStatistics processStatistics= runProcess(app, arguments);
@@ -230,7 +230,7 @@ int main(array<System::String ^> ^args)
         arguments = arguments + args[argumentIndex] + " ";
     }
 
-    runJobs(app, arguments);
+    runJobs(app, arguments, 10);
 
     return 0;
 }
