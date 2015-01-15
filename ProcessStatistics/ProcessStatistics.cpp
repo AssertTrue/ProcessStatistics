@@ -163,7 +163,7 @@ public:
             total += difference*difference;
         }
 
-        return sqrt(total / static_cast<T>(this->values.size()));
+        return sqrt(total / static_cast<T>(std::max(this->values.size()-1,1)));
     }
 
 private:
