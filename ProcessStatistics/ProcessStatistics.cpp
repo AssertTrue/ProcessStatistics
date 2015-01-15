@@ -180,10 +180,17 @@ void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRun
     for (size_t runNumber= 1; runNumber <= aNumberOfRuns; ++runNumber)
     {
         Console::WriteLine(L"Starting run number " + runNumber.ToString());
-        ProcessStatistics processStatistics= runProcess(aApplicationPath, aArguments);
-        totalProcessorTimeInSecondsStatistic.add(processStatistics.totalProcessorTimeInSeconds);
-        peakWorkingSetInKBStatistic.add(processStatistics.peakWorkingSetInKB);
-        peakPageFileUsageInKBStatistic.add(processStatistics.peakPageFileUsageInKB);
+        try
+        {
+            ProcessStatistics processStatistics= runProcess(aApplicationPath, aArguments);
+            totalProcessorTimeInSecondsStatistic.add(processStatistics.totalProcessorTimeInSeconds);
+            peakWorkingSetInKBStatistic.add(processStatistics.peakWorkingSetInKB);
+            peakPageFileUsageInKBStatistic.add(processStatistics.peakPageFileUsageInKB);
+        }
+        catch (System::ComponentModel::Win32Exception ^ aException)
+        {
+            Console::WriteLine(L"Run failed: " + aException->Message);
+        }
     }
 
     Console::WriteLine(L"All runs complete.\n");
