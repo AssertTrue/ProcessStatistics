@@ -3,6 +3,8 @@
 #include <list>
 #include <Windows.h>
 #include <psapi.h>
+#undef max
+#include <algorithm>
 
 using namespace System;
 using namespace System::Diagnostics;
@@ -163,7 +165,7 @@ public:
             total += difference*difference;
         }
 
-        return sqrt(total / static_cast<T>(std::max(this->values.size()-1,1)));
+        return sqrt(total / static_cast<T>(std::max<int>(((int)this->values.size())-1,1)));
     }
 
 private:
@@ -171,7 +173,7 @@ private:
     std::list<T> values;
 };
 
-void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRuns, String ^ aOutputFileName)
+void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRuns, String ^ aOutputFileName, String ^ aRunID)
 {
     Statistic<double> totalProcessorTimeInSecondsStatistic;
     Statistic<double> peakWorkingSetInKBStatistic;
@@ -207,7 +209,8 @@ void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRun
 
     String ^ currentContent= System::String::Empty;
 
-    String ^ data= totalProcessorTimeInSecondsStatistic.average().ToString()
+    String ^ data= aRunID
+                   + ", " + totalProcessorTimeInSecondsStatistic.average().ToString()
                    + ", " + totalProcessorTimeInSecondsStatistic.standardDeviation().ToString()
                    + ", " + peakWorkingSetInKBStatistic.average().ToString()
                    + ", " + peakWorkingSetInKBStatistic.standardDeviation().ToString()
@@ -217,7 +220,7 @@ void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRun
 
     if (!IO::File::Exists(aOutputFileName))
     {
-        data= "Average total processor time (s), Standard deviation of total processor time (s), Average peak working set (kb), Standard deviation of peak working set (kb), Average peak page file usage (kb), Standard deviation of peak page file usage (kb)" + Environment::NewLine
+        data= "Run ID, Average total processor time (s), Standard deviation of total processor time (s), Average peak working set (kb), Standard deviation of peak working set (kb), Average peak page file usage (kb), Standard deviation of peak page file usage (kb)" + Environment::NewLine
               + data;
     }
 
@@ -228,26 +231,27 @@ int main(array<System::String ^> ^args)
 {
     size_t numberOfRuns= 0;
 
-    if (args->Length >= 3
+    if (args->Length >= 4
         && size_t::TryParse(args[0], numberOfRuns)
-        && args[1]->Length > 0)
+        && args[1]->Length > 0
+        && args[2]->Length > 0)
     {
         size_t numberOfRuns = size_t::Parse(args[0]);
 
-        String ^ app = args[2];
+        String ^ app = args[3];
     
         String ^ arguments = "";
     
-        for (int argumentIndex= 3; argumentIndex < args->Length; ++argumentIndex)
+        for (int argumentIndex= 4; argumentIndex < args->Length; ++argumentIndex)
         {
             arguments = arguments + args[argumentIndex] + " ";
         }
 
-        runJobs(app, arguments, numberOfRuns, args[1]);
+        runJobs(app, arguments, numberOfRuns, args[1], args[2]);
     }
     else
     {
-        Console::WriteLine("Usage: ProcessStatistics.exe <number of jobs> <path to output file> <path to executable> [argument1] [argument2] ...");
+        Console::WriteLine("Usage: ProcessStatistics.exe <number of jobs> <path to output file> <run id> <path to executable> [argument1] [argument2] ...");
     }
 
     return 0;
