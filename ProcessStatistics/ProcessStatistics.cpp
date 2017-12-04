@@ -209,18 +209,18 @@ void runJobs(String ^ aApplicationPath, String ^ aArguments, size_t aNumberOfRun
 
     String ^ currentContent= System::String::Empty;
 
-    String ^ data= aRunID
-                   + ", " + totalProcessorTimeInSecondsStatistic.average().ToString()
+    String ^ data= totalProcessorTimeInSecondsStatistic.average().ToString()
                    + ", " + totalProcessorTimeInSecondsStatistic.standardDeviation().ToString()
                    + ", " + peakWorkingSetInKBStatistic.average().ToString()
                    + ", " + peakWorkingSetInKBStatistic.standardDeviation().ToString()
                    + ", " + peakPageFileUsageInKBStatistic.average().ToString()
                    + ", " + peakPageFileUsageInKBStatistic.standardDeviation().ToString()
+                   + ", " + aRunID
                    + Environment::NewLine;
 
     if (!IO::File::Exists(aOutputFileName))
     {
-        data= "Run ID, Average total processor time (s), Standard deviation of total processor time (s), Average peak working set (kb), Standard deviation of peak working set (kb), Average peak page file usage (kb), Standard deviation of peak page file usage (kb)" + Environment::NewLine
+        data= "Average total processor time (s), Standard deviation of total processor time (s), Average peak working set (kb), Standard deviation of peak working set (kb), Average peak page file usage (kb), Standard deviation of peak page file usage (kb), Run ID" + Environment::NewLine
               + data;
     }
 
